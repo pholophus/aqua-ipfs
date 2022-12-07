@@ -171,6 +171,38 @@ pub fn dag_get(hash: String, file_path: String, api_multiaddr: String, timeout_s
         .into()
 }
 
+/// Get content by provided hash from IPFS.
+#[marine]
+pub fn upload_ipfs(input: String, file_path: String, api_multiaddr: String, timeout_sec: u64){
+    log::info!("input value {}", input);
+
+    let bash_args = vec![
+        String::from("echo"),
+        String::from(input.clone()),
+        String::from(">"),
+        inject_vault_host_path(file_path.clone())
+    ];
+
+    unwrap_mounted_binary_result(bash(bash_args));
+
+    let ipfs_args = vec![
+        String::from("dag"),
+        String::from("get"),
+        inject_vault_host_path(file_path.clone()),
+        String::from(input.clone())
+    ];
+
+    let ipfs_cmd = make_cmd_args(ipfs_args, api_multiaddr, timeout_sec);
+
+    log::info!("ipfs get args {:?}", ipfs_cmd);
+
+    unwrap_mounted_binary_result(ipfs(ipfs_cmd));
+        // .map(|output| {
+        //     log::info!("ipfs get output: {}", output);
+        // })
+        // .into()
+}
+
 #[marine]
 pub fn get_peer_id(api_multiaddr: String, timeout_sec: u64) -> IpfsGetPeerIdResult {
     let result: Result<String> = try {
@@ -197,6 +229,9 @@ pub fn get_peer_id(api_multiaddr: String, timeout_sec: u64) -> IpfsGetPeerIdResu
 extern "C" {
     /// Execute provided cmd as a parameters of ipfs cli, return result.
     pub fn ipfs(cmd: Vec<String>) -> MountedBinaryResult;
+
+    /// Execute provided cmd as a parameters of bash command, return result.
+    pub fn bash(cmd: Vec<String>) -> MountedBinaryResult;
 }
 
 fn inject_vault_host_path(path: String) -> String {

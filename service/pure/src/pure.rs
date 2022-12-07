@@ -27,6 +27,7 @@ use multiaddr::{multihash::Multihash, Multiaddr, Protocol};
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::str::FromStr;
+use uuid::Uuid;
 
 const CONFIG_FILE_PATH: &str = "/tmp/multiaddr_config";
 const DEFAULT_TIMEOUT_SEC: u64 = 1u64;
@@ -182,6 +183,32 @@ pub fn get_from(hash: String, external_multiaddr: String) -> IpfsGetResult {
     println!("particle_vault_path {}", particle_vault_path);
     let path = format!("{}/{}", particle_vault_path, hash);
     let get_result = ipfs_get(hash, path.clone(), external_multiaddr, timeout);
+
+    if get_result.success {
+        Ok(path).into()
+    } else {
+        Err(eyre::eyre!(get_result.error)).into()
+    }
+}
+
+#[marine]
+pub fn upload_from(input: String, external_multiaddr: String) -> IpfsGetResult {
+    log::info!("upload to ipfs: {}", input);
+    let config = load_config();
+    let timeout = config.timeout;
+
+    let particle_id = marine_rs_sdk::get_call_parameters().particle_id;
+    if Multiaddr::from_str(&external_multiaddr).is_err() {
+        return Err(eyre::eyre!("invalid multiaddr: {}", external_multiaddr)).into();
+    }
+
+    let particle_vault_path = format!("/tmp/vault/{}", particle_id);
+    println!("particle_vault_path {}", particle_vault_path);
+    
+    let id = Uuid::new_v4();
+
+    let path = format!("{}/{}", particle_vault_path, id);
+    let get_result = ipfs_upload(input, path.clone(), external_multiaddr, timeout);
 
     if get_result.success {
         Ok(path).into()
@@ -377,6 +404,9 @@ extern "C" {
         api_multiaddr: String,
         timeout_sec: u64,
     ) -> IpfsResult;
+
+    #[link_name = "upload_ipfs"]
+    pub fn ipfs_upload(input:String, file_path: String, api_multiaddr: String, timeout_sec: u64) -> IpfsPutResult;
 
     /// Put provided file to ipfs, return ipfs hash of the file.
     #[link_name = "put"]
