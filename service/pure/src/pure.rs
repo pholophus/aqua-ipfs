@@ -181,7 +181,12 @@ pub fn get_from(hash: String, external_multiaddr: String) -> IpfsGetResult {
 
     let particle_vault_path = format!("/tmp/vault/{}", particle_id);
     println!("particle_vault_path {}", particle_vault_path);
-    let path = format!("{}/{}", particle_vault_path, hash);
+    let id = Uuid::new_v4();
+    // let mut file = File::create("hello.txt");
+    let path = format!("{}/{}", particle_vault_path, "iqbal1.txt");
+
+    // let path2 = format!("{}//{}", path.clone(), "file.txt");
+
     let get_result = ipfs_get(hash, path.clone(), external_multiaddr, timeout);
 
     if get_result.success {
@@ -207,7 +212,9 @@ pub fn upload_from(input: String, external_multiaddr: String) -> IpfsGetResult {
     
     let id = Uuid::new_v4();
 
-    let path = format!("{}/{}", particle_vault_path, id);
+    let path = format!("{}/{}", particle_vault_path, input);
+
+    println!("path -> {:?}", path);
     let get_result = ipfs_upload(input, path.clone(), external_multiaddr, timeout);
 
     if get_result.success {

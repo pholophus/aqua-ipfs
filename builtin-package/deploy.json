@@ -1,0 +1,28 @@
+{
+    "aqua_ipfs_pholophus_test": {
+      "modules": [
+        {
+            "name": "ipfs_effector",
+            "path": "ipfs_effector.wasm",
+            "mounted_binaries":[["ipfs", "/usr/local/bin/ipfs"],["bash", "/usr/bin/bash"]],
+            "mem_page_count": 1,
+            "preopened_files": [
+                "/tmp"
+            ],
+            "mapped_dirs": [["tmp","./tmp"]],
+            "logger_enabled": true
+        },
+        {
+            "name": "ipfs_pure",
+            "path": "ipfs_pure.wasm",
+            "mem_page_count": 1,
+            "preopened_files": [
+              "/tmp"
+            ],
+            "mapped_dirs": [["tmp", "./tmp"]],
+            "logger_enabled": true
+        }
+      ]
+    }
+  }
+  

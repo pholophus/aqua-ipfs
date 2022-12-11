@@ -22,8 +22,18 @@ use marine_rs_sdk::marine;
 use marine_rs_sdk::module_manifest;
 use marine_rs_sdk::MountedBinaryResult;
 use marine_rs_sdk::WasmLoggerBuilder;
-
+use std::process::Command;
+use std::fs;
+use std::net::SocketAddr;
+use std::fs::File;
+use std::env::temp_dir;
+use std::io::BufWriter;
+use std::io::Write;
 use eyre::{Result, WrapErr};
+use std::env::args;
+use std::fmt::Write as OtherWrite;
+
+use std::io::Cursor;
 
 module_manifest!();
 
@@ -82,10 +92,13 @@ pub fn put(file_path: String, api_multiaddr: String, timeout_sec: u64) -> IpfsPu
         };
     }
 
+    println!("file path ---> {:?}", inject_vault_host_path(file_path.clone()));
+
+    
     let args = vec![
         String::from("add"),
         String::from("-Q"),
-        inject_vault_host_path(file_path),
+        inject_vault_host_path(file_path.clone()),
     ];
     let cmd = make_cmd_args(args, api_multiaddr, timeout_sec);
 
@@ -109,12 +122,14 @@ pub fn dag_put(file_path: String, api_multiaddr: String, timeout_sec: u64) -> Ip
         };
     }
 
+    let data = Cursor::new("Hello World!");
+
     let args = vec![
         String::from("dag"),
         String::from("put"),
         String::from("--input-codec"),
         String::from("raw"),
-        String::from(file_path)
+        // data
     ];
 
     let cmd = make_cmd_args(args, api_multiaddr, timeout_sec);
@@ -131,44 +146,132 @@ pub fn dag_put(file_path: String, api_multiaddr: String, timeout_sec: u64) -> Ip
 pub fn get(hash: String, file_path: String, api_multiaddr: String, timeout_sec: u64) -> IpfsResult {
     log::info!("get called with hash {}", hash);
 
-    let args = vec![
+    // println!("file path ---> {:?}", file_path);
+
+    // println!("file path injected ---> {:?}", inject_vault_host_path(file_path.clone()));
+
+    // let mut dir = temp_dir();
+    
+    // File::create(file_path.clone());
+    // fs::create_dir_all(file_path.clone());
+    // fs::create_dir_all(inject_vault_host_path(file_path.clone()));
+
+    // fs::write(file_path.clone(), "Muhammad Iqbal");
+    // fs::write(inject_vault_host_path(file_path.clone()), "Muhammad Iqbal");
+
+    // if !std::path::Path::new(&file_path.clone()).exists() {
+    //     println!("Path does not exist");
+    // }
+    // if !std::path::Path::new(&inject_vault_host_path(file_path.clone())).exists() {
+    //     println!("Path does not exist");
+    // }
+
+    // write!(inject_vault_host_path(inject_vault_host_path(file_path.clone())), "{}", "muhd iqbal");
+
+    // let contents = fs::read_to_string(file_path.clone())
+    //     .expect("Should have been able to read the file");
+    // let contents = fs::read_to_string(inject_vault_host_path(file_path.clone()))
+    //     .expect("Should have been able to read the file");
+
+    // println!("With text:\n{contents}");
+
+    // let mut dir = temp_dir();
+    // println!("{}", dir.to_str().unwrap());
+
+    // let file_name = format!("{}.txt", "test_1");
+    // println!("{}", file_name);
+    // dir.push(file_name);
+
+    // let file = File::create(dir);
+
+    // let args = vec![
+    //     String::from("add"),
+    //     String::from("-Q"),
+    //     String::from("-r"),
+    //     String::from("/tmp/iqbal.txt")
+    //     // file_path.clone()
+    //     // inject_vault_host_path(file_path.clone())
+    // ];
+
+    
+// std::fs::read_to_string(name);
+    
+
+    let args_create_file = vec![
         String::from("get"),
         String::from("-o"),
-        inject_vault_host_path(file_path),
-        hash,
+        inject_vault_host_path(file_path.clone()),
+        String::from("QmfBRabun4FpaHV4wVXtnqtopUTro93XJHiWhNZscViCaq"),
     ];
-    let cmd = make_cmd_args(args, api_multiaddr, timeout_sec);
+    let cmd_create_file = make_cmd_args(args_create_file, api_multiaddr.clone(), timeout_sec);
 
-    log::info!("ipfs get args {:?}", cmd);
+    // let mut f = std::fs::OpenOptions::new().write(true).truncate(true).open(inject_vault_host_path(file_path.clone()));
+    // f.write(b"muhd iqbal berjaya edit");
+    // f.expect("successfully edit").flush();
+    // Ok(())
 
-    unwrap_mounted_binary_result(ipfs(cmd))
+    // fs::write(inject_vault_host_path(file_path.clone()), b"muhd iqbal");
+
+    // let name =inject_vault_host_path(file_path.clone());
+    // std::fs::write(name.clone(), "iqbal wrote").unwrap();
+    // std::fs::read_to_string(name.clone());
+
+    ipfs(cmd_create_file.clone());
+
+    let name = "/tmp/vault/test3.txt";
+    // std::fs::create_dir(name).expect("should create dir");
+    std::fs::write(name, b"hello");
+
+    let args_add_ipfs = vec![
+        String::from("add"),
+        String::from("-Q"),
+        String::from(name)
+    ];
+
+    let cmd_add_ipfs = make_cmd_args(args_add_ipfs, api_multiaddr.clone(), timeout_sec);
+
+    unwrap_mounted_binary_result(ipfs(cmd_add_ipfs))
         .map(|output| {
             log::info!("ipfs get output: {}", output);
         })
         .into()
+    
+    // let cmd = make_cmd_args(args, api_multiaddr, timeout_sec);
+
+    // let bash_cmd = vec![
+    //     String::from("touch"),
+    //     String::from("/tmp/iqbal/test_iqbal.txt")
+    // ];
+
+    // bash(bash_cmd);
+
+    
 }
 
 /// Get content by provided hash from IPFS.
 #[marine]
-pub fn dag_get(hash: String, file_path: String, api_multiaddr: String, timeout_sec: u64) -> IpfsResult{
+pub fn dag_get(hash: String, file_path: String, api_multiaddr: String, timeout_sec: u64){
     log::info!("get called with hash {}", hash);
 
-    let args = vec![
-        String::from("dag"),
-        String::from("get"),
-        inject_vault_host_path(file_path),
-        hash,
-    ];
 
-    let cmd = make_cmd_args(args, api_multiaddr, timeout_sec);
+    fs::write(file_path.clone(), "iqbal");
 
-    log::info!("ipfs get args {:?}", cmd);
+    // let args = vec![
+    //     String::from("dag"),
+    //     String::from("get"),
+    //     inject_vault_host_path(file_path.clone()),
+    //     hash,
+    // ];
 
-    unwrap_mounted_binary_result(ipfs(cmd))
-        .map(|output| {
-            log::info!("ipfs get output: {}", output);
-        })
-        .into()
+    // let cmd = make_cmd_args(args, api_multiaddr, timeout_sec);
+
+    // log::info!("ipfs get args {:?}", cmd);
+
+    // unwrap_mounted_binary_result(ipfs(cmd))
+    //     .map(|output| {
+    //         log::info!("ipfs get output: {}", output);
+    //     })
+    //     .into()
 }
 
 /// Get content by provided hash from IPFS.
@@ -176,27 +279,57 @@ pub fn dag_get(hash: String, file_path: String, api_multiaddr: String, timeout_s
 pub fn upload_ipfs(input: String, file_path: String, api_multiaddr: String, timeout_sec: u64){
     log::info!("input value {}", input);
 
-    let bash_args = vec![
-        String::from("echo"),
-        String::from(input.clone()),
-        String::from(">"),
-        inject_vault_host_path(file_path.clone())
-    ];
+    fs::write(file_path, input);
+    // fs::write("bar.txt", "dolor sit")?;
+    // Ok(())
 
-    unwrap_mounted_binary_result(bash(bash_args));
+    // let args = vec![
+    //     String::from("echo")
+    // ];
 
-    let ipfs_args = vec![
-        String::from("dag"),
-        String::from("get"),
-        inject_vault_host_path(file_path.clone()),
-        String::from(input.clone())
-    ];
+    // let result = unwrap_mounted_binary_result(bash(args));
 
-    let ipfs_cmd = make_cmd_args(ipfs_args, api_multiaddr, timeout_sec);
+    // println!("{:?}", result);
 
-    log::info!("ipfs get args {:?}", ipfs_cmd);
+    // Command::new("ls")
+    //     .arg("-l")
+    //     .arg("-a")
+    //     .spawn()
+    //     .expect("ls command failed to start");
 
-    unwrap_mounted_binary_result(ipfs(ipfs_cmd));
+    // unwrap_mounted_binary_result(bash(args))
+        // .map(|output| {
+        //     log::info!("ipfs get output: {}", output);
+        // })
+        // .into()
+
+    // let output = Command::new("echo")
+    //     .arg("Hello world")
+    //     .output()
+    //     .expect("Failed to execute command");
+
+    // Command::new("sh")
+    //         .arg("-c")
+    //         .arg("echo hello")
+    //         .output()
+    //         .expect("failed to execute process");
+
+    // Command::new("sh")
+    //     .spawn()
+    //     .expect("sh command failed to start");
+
+    // let ipfs_args = vec![
+    //     String::from("dag"),
+    //     String::from("put"),
+    //     inject_vault_host_path(file_path.clone()),
+    //     String::from(input.clone())
+    // ];
+
+    // let ipfs_cmd = make_cmd_args(ipfs_args, api_multiaddr, timeout_sec);
+
+    // log::info!("ipfs get args {:?}", ipfs_cmd);
+
+    // unwrap_mounted_binary_result(ipfs(ipfs_cmd));
         // .map(|output| {
         //     log::info!("ipfs get output: {}", output);
         // })
@@ -230,7 +363,6 @@ extern "C" {
     /// Execute provided cmd as a parameters of ipfs cli, return result.
     pub fn ipfs(cmd: Vec<String>) -> MountedBinaryResult;
 
-    /// Execute provided cmd as a parameters of bash command, return result.
     pub fn bash(cmd: Vec<String>) -> MountedBinaryResult;
 }
 
@@ -238,7 +370,7 @@ fn inject_vault_host_path(path: String) -> String {
     let vault = "/tmp/vault";
     if let Some(stripped) = path.strip_prefix(&vault) {
         let host_vault_path = std::env::var(vault).expect("vault must be mapped to /tmp/vault");
-        format!("/{}/{}", host_vault_path, stripped)
+        format!("{}/{}", host_vault_path, stripped)
     } else {
         path
     }

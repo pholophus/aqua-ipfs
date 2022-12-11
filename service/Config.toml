@@ -10,7 +10,7 @@ modules_dir = "artifacts/"
     bash = "/usr/bin/bash"
 
     [module.wasi]
-    envs = { "IPFS_ADDR" = "/dns4/relay02.fluence.dev/tcp/15001", "timeout" = "1s" }
+    envs = { "/tmp/vault" = "/tmp" }
 
 [[module]]
     name = "ipfs_pure"
